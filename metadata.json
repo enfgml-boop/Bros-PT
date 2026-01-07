@@ -1,0 +1,7 @@
+{
+  "name": "Bros PT - Dark & Premium Boxing/MMA",
+  "description": "A high-end personal training website for boxing and MMA, featuring a full CMS for managing programs, trainers, and blog posts.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
