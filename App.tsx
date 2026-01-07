@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect, createContext, useContext, useRef, useMemo } from 'react';
+import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
   Menu, X, Instagram, Youtube, MessageCircle, 
   ChevronRight, LayoutDashboard, FileText, Settings, 
   Plus, Trash2, Edit3, BarChart3, Home as HomeIcon,
   LogOut, Shield, Users, Target, Camera, Upload, Save,
-  MapPin, Link as LinkIcon, Lock, RefreshCw
+  MapPin, Link as LinkIcon, Lock, RefreshCw, CheckCircle
 } from 'lucide-react';
 import { Post, Program, Trainer, SiteConfig, AppState } from './types';
 import { INITIAL_CONFIG, INITIAL_POSTS, INITIAL_PROGRAMS, INITIAL_TRAINERS } from './constants';
@@ -27,6 +27,7 @@ interface AppContextType {
   state: AppState;
   updateConfig: (config: SiteConfig) => void;
   addPost: (post: Post) => void;
+  updatePost: (post: Post) => void;
   deletePost: (id: string) => void;
   updateProgram: (program: Program) => void;
   addProgram: (program: Program) => void;
@@ -68,10 +69,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return sessionStorage.getItem('admin_auth') === 'true';
   });
 
+  // 전역 상태가 변경될 때마다 확실하게 로컬스토리지에 저장
   useEffect(() => {
     localStorage.setItem('bros_pt_state', JSON.stringify(state));
     document.documentElement.style.setProperty('--primary-color', state.config.primaryColor);
-    document.title = `${state.config.siteName} | Premium Boxing & MMA`;
+    document.title = state.config.siteName;
   }, [state]);
 
   const login = (password: string) => {
@@ -90,6 +92,10 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const updateConfig = (config: SiteConfig) => setState(prev => ({ ...prev, config }));
   const addPost = (post: Post) => setState(prev => ({ ...prev, posts: [post, ...prev.posts] }));
+  const updatePost = (post: Post) => setState(prev => ({
+    ...prev,
+    posts: prev.posts.map(p => p.id === post.id ? post : p)
+  }));
   const deletePost = (id: string) => setState(prev => ({ ...prev, posts: prev.posts.filter(p => p.id !== id) }));
   
   const updateProgram = (program: Program) => setState(prev => ({
@@ -107,7 +113,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const deleteTrainer = (id: string) => setState(prev => ({ ...prev, trainers: prev.trainers.filter(t => t.id !== id) }));
 
   const resetToDefaults = () => {
-    if(confirm('모든 데이터를 초기 설정으로 되돌리시겠습니까? 현재 작성된 내용은 모두 삭제됩니다.')) {
+    if(confirm('모든 내용을 초기화하시겠습니까?')) {
       setState({
         config: INITIAL_CONFIG,
         posts: INITIAL_POSTS,
@@ -119,7 +125,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <AppContext.Provider value={{ 
-      state, updateConfig, addPost, deletePost, 
+      state, updateConfig, addPost, updatePost, deletePost, 
       updateProgram, addProgram, deleteProgram,
       updateTrainer, addTrainer, deleteTrainer,
       resetToDefaults,
@@ -143,18 +149,18 @@ const ImageUpload: React.FC<{ currentImage?: string; onImageChange: (base64: str
   };
   return (
     <div className="space-y-2">
-      <label className="block text-xs font-bold text-gray-500 uppercase tracking-tighter">{label}</label>
+      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest">{label}</label>
       <div onClick={() => fileInputRef.current?.click()} className="group relative w-full h-44 bg-black border border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-all overflow-hidden shadow-inner">
         {currentImage ? (
           <>
-            <img src={currentImage} className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" alt="Preview" />
+            <img src={currentImage} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" alt="Preview" />
             <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <Camera size={28} className="text-white mb-2" />
-              <span className="text-white text-[10px] font-black uppercase">이미지 변경</span>
+              <span className="text-white text-[10px] font-black uppercase">사진 변경</span>
             </div>
           </>
         ) : (
-          <><Upload size={28} className="text-gray-700 mb-2" /><span className="text-gray-600 text-[10px] font-black uppercase">사진 업로드</span></>
+          <><Upload size={28} className="text-gray-700 mb-2" /><span className="text-gray-600 text-[10px] font-black uppercase tracking-tighter">사진 업로드</span></>
         )}
       </div>
       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
@@ -205,7 +211,6 @@ const Navbar: React.FC = () => {
         </button>
       </div>
 
-      {/* 모바일 메뉴 */}
       {isOpen && (
         <div className="md:hidden absolute top-20 left-0 w-full bg-black border-b border-white/10 animate-fade-in shadow-2xl overflow-hidden">
           <div className="p-6 space-y-4">
@@ -299,7 +304,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {state.programs.slice(0, 3).map(p => (
-              <div key={p.id} className="group relative aspect-[3/4] rounded-3xl overflow-hidden bg-surface border border-white/5 transition-transform hover:-translate-y-2">
+              <div key={p.id} className="group relative aspect-[3/4] rounded-3xl overflow-hidden bg-surface border border-white/5 transition-transform hover:-translate-y-2 shadow-2xl">
                 <img src={p.imageUrl} className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-700" alt="" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent p-8 flex flex-col justify-end">
                   <h3 className="text-2xl font-black italic uppercase mb-3">{p.title}</h3>
@@ -321,7 +326,7 @@ const ProgramsPage: React.FC = () => {
     <div className="pt-40 pb-24 max-w-7xl mx-auto px-6 animate-fade-in">
       <div className="mb-20 text-center md:text-left">
         <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-4">Programs</h1>
-        <p className="text-gray-500 font-bold uppercase text-xs tracking-[0.3em]">Precision & Performance</p>
+        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">Precision & Performance</p>
       </div>
       <div className="space-y-32">
         {state.programs.map((p, i) => (
@@ -354,7 +359,7 @@ const TrainersPage: React.FC = () => {
     <div className="pt-40 pb-24 max-w-7xl mx-auto px-6 animate-fade-in">
       <div className="mb-20 text-center">
         <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-4">Elite Crew</h1>
-        <p className="text-gray-500 font-bold uppercase text-xs tracking-[0.3em]">The Best For You</p>
+        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">The Best For You</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {state.trainers.map(t => (
@@ -405,34 +410,132 @@ const BlogPage: React.FC = () => {
   );
 };
 
-// --- Admin Section ---
+// --- Admin Section Components ---
+
+const ProgramEditor: React.FC<{ program: Program }> = ({ program }) => {
+  const { updateProgram, deleteProgram } = useApp();
+  const [local, setLocal] = useState<Program>(program);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    updateProgram(local);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="bg-surface p-6 md:p-8 rounded-[2rem] border border-white/5 space-y-6 relative shadow-2xl">
+      <button onClick={() => confirm('삭제하시겠습니까?') && deleteProgram(program.id)} className="absolute top-6 right-6 p-2 text-gray-700 hover:text-red-500 transition-all"><Trash2 size={18}/></button>
+      <ImageUpload label="프로그램 썸네일" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
+      <div className="space-y-4">
+        <input className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary" value={local.title} onChange={e => setLocal({...local, title: e.target.value})} placeholder="제목" />
+        <div className="relative">
+          <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/>
+          <input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary" value={local.consultUrl || ''} onChange={e => setLocal({...local, consultUrl: e.target.value})} placeholder="개별 상담 URL" />
+        </div>
+        <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-32 resize-none keep-breaks outline-none focus:border-primary" value={local.description} onChange={e => setLocal({...local, description: e.target.value})} placeholder="상세 설명 (엔터 줄바꿈 가능)" />
+      </div>
+      <button onClick={handleSave} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${saved ? 'bg-green-600 text-white shadow-lg' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}>
+        {saved ? <><CheckCircle size={16}/> 저장완료</> : <><Save size={16}/> 이 프로그램 저장</>}
+      </button>
+    </div>
+  );
+};
+
+const TrainerEditor: React.FC<{ trainer: Trainer }> = ({ trainer }) => {
+  const { updateTrainer, deleteTrainer } = useApp();
+  const [local, setLocal] = useState<Trainer>(trainer);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    updateTrainer(local);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="bg-surface p-6 md:p-8 rounded-[2rem] border border-white/5 space-y-6 relative shadow-2xl">
+      <button onClick={() => confirm('삭제하시겠습니까?') && deleteTrainer(trainer.id)} className="absolute top-6 right-6 p-2 text-gray-700 hover:text-red-500 transition-all"><Trash2 size={18}/></button>
+      <ImageUpload label="코치 프로필" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary" value={local.name} onChange={e => setLocal({...local, name: e.target.value})} placeholder="이름" />
+          <input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-primary" value={local.role} onChange={e => setLocal({...local, role: e.target.value})} placeholder="직책" />
+        </div>
+        <div className="relative">
+          <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/>
+          <input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary" value={local.consultUrl || ''} onChange={e => setLocal({...local, consultUrl: e.target.value})} placeholder="개별 상담 링크 (오픈프로필 등)" />
+        </div>
+        <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-40 resize-none keep-breaks outline-none focus:border-primary" value={local.bio} onChange={e => setLocal({...local, bio: e.target.value})} placeholder="소개글 (엔터 줄바꿈 가능)" />
+      </div>
+      <button onClick={handleSave} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${saved ? 'bg-green-600 text-white shadow-lg' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}>
+        {saved ? <><CheckCircle size={16}/> 저장완료</> : <><Save size={16}/> 이 트레이너 저장</>}
+      </button>
+    </div>
+  );
+};
+
+const PostRow: React.FC<{ post: Post }> = ({ post }) => {
+  const { updatePost, deletePost } = useApp();
+  const [local, setLocal] = useState<Post>(post);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    updatePost(local);
+    setSaved(true);
+    setTimeout(() => { setSaved(false); setIsEditing(false); }, 1500);
+  };
+
+  if (isEditing) {
+    return (
+      <tr className="bg-white/[0.03]">
+        <td colSpan={5} className="p-6">
+          <div className="bg-black p-6 rounded-2xl border border-white/10 space-y-4">
+            <ImageUpload label="게시물 이미지" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
+            <input className="w-full bg-surface border border-white/10 rounded-xl p-3 font-bold" value={local.title} onChange={e => setLocal({...local, title: e.target.value})} placeholder="제목" />
+            <textarea className="w-full bg-surface border border-white/10 rounded-xl p-3 h-32 keep-breaks" value={local.content} onChange={e => setLocal({...local, content: e.target.value})} placeholder="내용" />
+            <div className="flex gap-4">
+              <button onClick={handleSave} className="flex-1 bg-primary py-3 rounded-xl font-black text-xs uppercase text-white shadow-lg">{saved ? '저장됨' : '변경사항 저장하기'}</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 bg-white/5 py-3 rounded-xl font-black text-xs uppercase text-gray-400">닫기</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr className="hover:bg-white/[0.02] transition-colors border-b border-white/5">
+      <td className="p-6"><img src={post.imageUrl} className="w-16 h-10 object-cover rounded-lg border border-white/10" alt="" /></td>
+      <td className="p-6"><p className="font-black text-sm uppercase tracking-tighter">{post.title}</p><p className="text-gray-600 text-[10px] mt-1">{post.date}</p></td>
+      <td className="p-6"><span className="px-2 py-1 bg-white/5 rounded text-[10px] text-gray-500 font-bold">{post.category}</span></td>
+      <td className="p-6 text-right">
+        <div className="flex justify-end gap-3">
+          <button onClick={() => setIsEditing(true)} className="p-2 text-gray-600 hover:text-primary transition-colors"><Edit3 size={18}/></button>
+          <button onClick={() => confirm('삭제할까요?') && deletePost(post.id)} className="p-2 text-gray-600 hover:text-red-500 transition-colors"><Trash2 size={18}/></button>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+// --- Admin Setup ---
 
 const AdminLogin: React.FC = () => {
   const { login } = useApp();
   const [pw, setPw] = useState('');
   const [error, setError] = useState(false);
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (login(pw)) setError(false); else { setError(true); setPw(''); }
-  };
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-surface border border-white/10 rounded-[2.5rem] p-12 shadow-2xl animate-fade-in text-center">
+      <div className="w-full max-w-md bg-surface border border-white/10 rounded-[2.5rem] p-12 text-center shadow-2xl animate-fade-in">
         <div className="w-20 h-20 bg-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-primary/20"><Lock className="text-black" size={36} /></div>
-        <h1 className="text-3xl font-black italic uppercase mb-8 tracking-tighter">Admin Access</h1>
-        <form onSubmit={handleLogin} className="space-y-6">
-          <input 
-            type="password" 
-            placeholder="ENTER PASSWORD" 
-            className={`w-full bg-black border ${error ? 'border-red-500' : 'border-white/10'} rounded-2xl p-5 text-center text-2xl outline-none focus:border-primary transition-all font-black tracking-[0.5em] uppercase`} 
-            value={pw} 
-            onChange={e => { setPw(e.target.value); if(error) setError(false); }} 
-            autoFocus 
-          />
-          {error && <p className="text-red-500 text-xs font-black uppercase tracking-widest">Access Denied</p>}
-          <button className="w-full bg-primary py-5 rounded-2xl font-black text-white shadow-2xl shadow-primary/30 active:scale-95 transition-all text-sm uppercase tracking-[0.2em]">Unlock Dashboard</button>
+        <h1 className="text-2xl font-black italic uppercase mb-8 tracking-tighter">Admin Access</h1>
+        <form onSubmit={e => { e.preventDefault(); if (!login(pw)) { setError(true); setPw(''); } }} className="space-y-6">
+          <input type="password" placeholder="PASSWORD" className="w-full bg-black border border-white/10 rounded-2xl p-5 text-center text-2xl outline-none focus:border-primary font-black tracking-widest uppercase shadow-inner transition-all" value={pw} onChange={e => { setPw(e.target.value); setError(false); }} autoFocus />
+          {error && <p className="text-red-500 text-xs font-black uppercase">Denied</p>}
+          <button className="w-full bg-primary py-5 rounded-2xl font-black text-white uppercase tracking-widest text-sm shadow-xl shadow-primary/30 transition-all active:scale-95">Unlock Dashboard</button>
         </form>
-        <div className="mt-12 pt-8 border-t border-white/5"><Link to="/" className="text-gray-600 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">Return to Site</Link></div>
       </div>
     </div>
   );
@@ -453,22 +556,18 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050505] flex text-gray-100 font-sans">
-      {/* 모바일 햄버거 (어드민용) */}
+    <div className="min-h-screen bg-[#050505] flex text-gray-100">
       <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden fixed bottom-6 right-6 z-[100] w-14 h-14 bg-primary rounded-full shadow-2xl flex items-center justify-center text-black">
         {isSidebarOpen ? <X size={28}/> : <Menu size={28}/>}
       </button>
 
       <aside className={`fixed lg:relative z-[90] w-72 h-screen border-r border-white/10 bg-[#080808] flex flex-col p-8 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="text-xl font-black italic flex items-center gap-2 mb-16"><div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center shadow-lg shadow-primary/10"><span className="text-black text-sm font-black">B</span></div> BROS ADMIN</div>
+        <div className="text-xl font-black italic mb-16 flex items-center gap-2">
+          <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center"><span className="text-black text-xs font-black">B</span></div> BROS ADMIN
+        </div>
         <nav className="flex-1 space-y-3">
           {menu.map(m => (
-            <Link 
-              key={m.p} 
-              to={m.p} 
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-4 p-4 rounded-2xl font-bold transition-all text-sm ${loc.pathname === m.p ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-[1.05]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
-            >
+            <Link key={m.p} to={m.p} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold transition-all text-sm ${loc.pathname === m.p ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
               {m.i} {m.n}
             </Link>
           ))}
@@ -480,7 +579,6 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </aside>
       
-      {/* 오버레이 (모바일용) */}
       {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/80 z-[80] backdrop-blur-sm"></div>}
 
       <main className="flex-1 p-6 md:p-12 overflow-y-auto w-full">
@@ -490,36 +588,28 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+// --- Admin Content Pages ---
+
 const AdminDashboard: React.FC = () => {
   const { state } = useApp();
   return (
     <AdminLayout>
       <header className="mb-12">
         <h1 className="text-4xl font-black italic uppercase tracking-tighter">Dashboard</h1>
-        <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">Status Overview</p>
       </header>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-        {[ { l: '누적 방문', v: '1,284', i: <BarChart3 className="text-primary"/> }, { l: '활성 회원', v: '96', i: <Users className="text-primary"/> }, { l: '게시물', v: state.posts.length.toString(), i: <FileText className="text-primary"/> } ].map(s => (
-          <div key={s.l} className="bg-surface p-10 rounded-[2rem] border border-white/5 shadow-2xl group hover:border-primary/20 transition-all flex justify-between items-center">
-            <div className="space-y-3">
-              <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{s.l}</p>
-              <p className="text-4xl font-black italic tracking-tighter">{s.v}</p>
-            </div>
-            <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-primary/10 transition-colors">{s.i}</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        {[ { l: '방문자', v: '1,284', i: <BarChart3 /> }, { l: '회원', v: '96', i: <Users /> }, { l: '게시물', v: state.posts.length.toString(), i: <FileText /> } ].map(s => (
+          <div key={s.l} className="bg-surface p-10 rounded-[2rem] border border-white/5 flex justify-between items-center group shadow-2xl">
+            <div className="space-y-2"><p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{s.l}</p><p className="text-3xl font-black italic tracking-tighter">{s.v}</p></div>
+            <div className="text-primary group-hover:scale-110 transition-transform">{s.i}</div>
           </div>
         ))}
       </div>
-      <div className="bg-surface p-10 rounded-[2rem] border border-white/5 shadow-2xl">
-        <h2 className="text-xl font-bold mb-8 flex items-center gap-3"><FileText size={20} className="text-primary"/> 최근 게시물</h2>
-        <div className="space-y-4">
+      <div className="bg-surface p-8 rounded-[2rem] border border-white/5 shadow-2xl">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><FileText size={20} className="text-primary"/> 최근 업데이트</h2>
+        <div className="space-y-3">
           {state.posts.slice(0, 3).map(p => (
-            <div key={p.id} className="p-5 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center hover:bg-white/10 transition-all">
-              <div className="flex gap-5 items-center">
-                <div className="w-14 h-14 rounded-xl bg-black overflow-hidden border border-white/10 shadow-lg"><img src={p.imageUrl} className="w-full h-full object-cover" alt="" /></div>
-                <div><p className="font-black text-sm tracking-tight">{p.title}</p><p className="text-[10px] text-gray-600 font-bold uppercase mt-1">{p.date} · {p.category}</p></div>
-              </div>
-              <ChevronRight size={18} className="text-gray-700" />
-            </div>
+            <div key={p.id} className="p-4 bg-white/5 rounded-2xl flex justify-between items-center"><div className="flex gap-4 items-center"><img src={p.imageUrl} className="w-10 h-10 object-cover rounded-lg border border-white/10" /><p className="font-bold text-sm tracking-tight">{p.title}</p></div><ChevronRight size={16} className="text-gray-700" /></div>
           ))}
         </div>
       </div>
@@ -528,63 +618,31 @@ const AdminDashboard: React.FC = () => {
 };
 
 const AdminCMS: React.FC = () => {
-  const { state, updateProgram, addProgram, deleteProgram, updateTrainer, addTrainer, deleteTrainer } = useApp();
-  const handleNewP = () => addProgram({ id: `p-${Date.now()}`, title: '새 프로그램', description: '', icon: 'target', imageUrl: 'https://picsum.photos/seed/p/600/400', consultUrl: '' });
-  const handleNewT = () => addTrainer({ id: `t-${Date.now()}`, name: '새 코치', role: '트레이너', bio: '', imageUrl: 'https://picsum.photos/seed/t/400/500', specialties: ['복싱'], consultUrl: '' });
-  
+  const { state, addProgram, addTrainer } = useApp();
   return (
     <AdminLayout>
       <header className="mb-16">
         <h1 className="text-4xl font-black italic uppercase tracking-tighter">Content CMS</h1>
-        <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">Programs & Elite Crew</p>
+        <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-2">수정 후 각 항목의 [저장] 버튼을 누르면 즉시 동기화됩니다.</p>
       </header>
       
       <section className="mb-24">
         <div className="flex justify-between items-end mb-10 border-b border-white/5 pb-6">
-          <h2 className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Target size={24} className="text-primary"/> Programs Management</h2>
-          <button onClick={handleNewP} className="bg-primary hover:scale-105 active:scale-95 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 transition-all"><Plus size={16} className="inline mr-2" /> New Program</button>
+          <h2 className="text-2xl font-black italic uppercase tracking-tighter">Programs</h2>
+          <button onClick={() => addProgram({ id: `p-${Date.now()}`, title: '새 프로그램', description: '', icon: 'target', imageUrl: 'https://picsum.photos/600/400', consultUrl: '' })} className="bg-primary px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 active:scale-95 transition-all"><Plus size={16} className="inline mr-1" /> New Program</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {state.programs.map(p => (
-            <div key={p.id} className="bg-surface p-8 rounded-[2rem] border border-white/5 space-y-6 relative group shadow-2xl animate-fade-in">
-              <button onClick={() => confirm('삭제하시겠습니까?') && deleteProgram(p.id)} className="absolute top-6 right-6 p-2 text-gray-700 hover:text-red-500 hover:bg-red-500/5 rounded-full transition-all"><Trash2 size={18}/></button>
-              <ImageUpload label="프로그램 썸네일" currentImage={p.imageUrl} onImageChange={b => updateProgram({...p, imageUrl: b})} />
-              <div className="space-y-4">
-                <input className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary transition-all shadow-inner" value={p.title} onChange={e => updateProgram({...p, title: e.target.value})} placeholder="PROGRAM TITLE" />
-                <div className="relative">
-                  <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/>
-                  <input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary transition-all shadow-inner" value={p.consultUrl || ''} onChange={e => updateProgram({...p, consultUrl: e.target.value})} placeholder="CONSULT LINK (URL)" />
-                </div>
-                <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-36 resize-none keep-breaks outline-none focus:border-primary transition-all shadow-inner" value={p.description} onChange={e => updateProgram({...p, description: e.target.value})} placeholder="DETAILED DESCRIPTION (ENTER FOR NEW LINE)" />
-              </div>
-            </div>
-          ))}
+          {state.programs.map(p => <ProgramEditor key={p.id} program={p} />)}
         </div>
       </section>
 
       <section className="mb-24">
         <div className="flex justify-between items-end mb-10 border-b border-white/5 pb-6">
-          <h2 className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Users size={24} className="text-primary"/> Elite Crew Management</h2>
-          <button onClick={handleNewT} className="bg-primary hover:scale-105 active:scale-95 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 transition-all"><Plus size={16} className="inline mr-2" /> New Trainer</button>
+          <h2 className="text-2xl font-black italic uppercase tracking-tighter">Elite Crew</h2>
+          <button onClick={() => addTrainer({ id: `t-${Date.now()}`, name: '새 코치', role: '트레이너', bio: '', imageUrl: 'https://picsum.photos/400/500', specialties: ['복싱'], consultUrl: '' })} className="bg-primary px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 active:scale-95 transition-all"><Plus size={16} className="inline mr-1" /> New Trainer</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {state.trainers.map(t => (
-            <div key={t.id} className="bg-surface p-8 rounded-[2rem] border border-white/5 space-y-6 relative group shadow-2xl animate-fade-in">
-              <button onClick={() => confirm('삭제하시겠습니까?') && deleteTrainer(t.id)} className="absolute top-6 right-6 p-2 text-gray-700 hover:text-red-500 hover:bg-red-500/5 rounded-full transition-all"><Trash2 size={18}/></button>
-              <ImageUpload label="코치 프로필 사진" currentImage={t.imageUrl} onImageChange={b => updateTrainer({...t, imageUrl: b})} />
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary transition-all shadow-inner" value={t.name} onChange={e => updateTrainer({...t, name: e.target.value})} placeholder="COACH NAME" />
-                  <input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-primary transition-all shadow-inner" value={t.role} onChange={e => updateTrainer({...t, role: e.target.value})} placeholder="ROLE (e.g. HEAD COACH)" />
-                </div>
-                <div className="relative">
-                  <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/>
-                  <input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary transition-all shadow-inner" value={t.consultUrl || ''} onChange={e => updateTrainer({...t, consultUrl: e.target.value})} placeholder="INDIVIDUAL CONSULT LINK" />
-                </div>
-                <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-44 resize-none keep-breaks outline-none focus:border-primary transition-all shadow-inner" value={t.bio} onChange={e => updateTrainer({...t, bio: e.target.value})} placeholder="COACH BIOGRAPHY (ENTER FOR NEW LINE)" />
-              </div>
-            </div>
-          ))}
+          {state.trainers.map(t => <TrainerEditor key={t.id} trainer={t} />)}
         </div>
       </section>
     </AdminLayout>
@@ -592,80 +650,55 @@ const AdminCMS: React.FC = () => {
 };
 
 const AdminPosts: React.FC = () => {
-  const { state, addPost, deletePost } = useApp();
+  const { state, addPost } = useApp();
   const [isAdd, setIsAdd] = useState(false);
   const [form, setForm] = useState<Partial<Post>>({ title: '', category: 'NOTICE', content: '', author: '관리자', imageUrl: '' });
-  
-  const save = () => {
+
+  const handleAdd = () => {
     if (!form.title || !form.content) return;
-    addPost({ id: Date.now().toString(), title: form.title!, category: form.category as any, content: form.content!, date: new Date().toISOString().split('T')[0], author: form.author!, imageUrl: form.imageUrl || 'https://picsum.photos/seed/post/800/600' });
-    setIsAdd(false); setForm({ title: '', category: 'NOTICE', content: '', author: '관리자', imageUrl: '' });
+    addPost({ 
+      id: Date.now().toString(), 
+      title: form.title!, 
+      category: form.category as any, 
+      content: form.content!, 
+      date: new Date().toISOString().split('T')[0], 
+      author: form.author!, 
+      imageUrl: form.imageUrl || 'https://picsum.photos/800/600' 
+    });
+    setIsAdd(false); 
+    setForm({ title: '', category: 'NOTICE', content: '', author: '관리자', imageUrl: '' });
   };
 
   return (
     <AdminLayout>
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
-        <div>
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter">Insights</h1>
-          <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">Blog & Community Posts</p>
-        </div>
-        <button onClick={() => setIsAdd(true)} className="bg-primary hover:scale-105 active:scale-95 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 transition-all text-xs flex gap-2 items-center"><Plus size={18}/> Write New Post</button>
+      <header className="flex justify-between items-end mb-16">
+        <h1 className="text-4xl font-black italic uppercase tracking-tighter">Insights</h1>
+        <button onClick={() => setIsAdd(true)} className="bg-primary px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] flex gap-2 items-center text-white shadow-lg shadow-primary/20 active:scale-95 transition-all"><Plus size={18}/> Write Post</button>
       </header>
 
       {isAdd && (
-        <div className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-md flex items-center justify-center p-6 overflow-y-auto">
-          <div className="bg-surface w-full max-w-3xl rounded-[3rem] p-10 md:p-12 border border-white/10 space-y-8 animate-fade-in shadow-2xl my-auto">
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter">Create Insight</h2>
+        <div className="fixed inset-0 z-[150] bg-black/95 flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-surface w-full max-w-2xl rounded-[3rem] p-10 border border-white/10 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <h2 className="text-xl font-black uppercase italic tracking-tighter">New Insight</h2>
             <ImageUpload label="게시물 대표 이미지" currentImage={form.imageUrl} onImageChange={b => setForm({...form, imageUrl: b})} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Title</label>
-                <input className="w-full bg-black border border-white/10 rounded-2xl p-5 outline-none focus:border-primary transition-all font-bold text-lg shadow-inner" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="POST TITLE" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Category</label>
-                <select className="w-full bg-black border border-white/10 rounded-2xl p-5 outline-none focus:border-primary transition-all font-bold text-lg appearance-none cursor-pointer shadow-inner" value={form.category} onChange={e => setForm({...form, category: e.target.value as any})}>
-                  <option value="NOTICE">공지사항 (NOTICE)</option>
-                  <option value="TIPS">운동 팁 (TIPS)</option>
-                  <option value="EVENT">이벤트 (EVENT)</option>
-                </select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Content</label>
-              <textarea className="w-full h-56 bg-black border border-white/10 rounded-2xl p-6 outline-none focus:border-primary transition-all keep-breaks shadow-inner" value={form.content} onChange={e => setForm({...form, content: e.target.value})} placeholder="WRITE YOUR INSIGHT HERE..." />
-            </div>
-            <div className="flex gap-6 pt-4">
-              <button onClick={save} className="flex-1 bg-primary py-5 rounded-2xl font-black text-white shadow-2xl active:scale-95 transition-all text-xs uppercase tracking-widest">Post Insight</button>
-              <button onClick={() => setIsAdd(false)} className="flex-1 bg-white/5 py-5 rounded-2xl font-black text-gray-400 hover:text-white transition-all text-xs uppercase tracking-widest">Cancel</button>
+            <input className="w-full bg-black border border-white/10 rounded-xl p-4 font-bold outline-none focus:border-primary transition-all" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="제목" />
+            <textarea className="w-full h-40 bg-black border border-white/10 rounded-xl p-4 keep-breaks outline-none focus:border-primary transition-all" value={form.content} onChange={e => setForm({...form, content: e.target.value})} placeholder="내용을 입력하세요..." />
+            <div className="flex gap-4">
+              <button onClick={handleAdd} className="flex-1 bg-primary py-4 rounded-xl font-black text-xs uppercase text-white shadow-lg">Save & Post</button>
+              <button onClick={() => setIsAdd(false)} className="flex-1 bg-white/5 py-4 rounded-xl font-black text-xs uppercase text-gray-400">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-surface rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
+      <div className="bg-surface rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-white/5 text-gray-600 font-black uppercase tracking-[0.2em] border-b border-white/5">
-              <tr>
-                <th className="p-8">Image</th>
-                <th className="p-8">Post Info</th>
-                <th className="p-8">Category</th>
-                <th className="p-8 text-right">Action</th>
-              </tr>
+            <thead className="bg-white/5 text-gray-600 font-black uppercase tracking-widest">
+              <tr><th className="p-6">Thumbnail</th><th className="p-6">Post Info</th><th className="p-6">Category</th><th className="p-6 text-right">Actions</th></tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {state.posts.map(p => (
-                <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="p-8"><img src={p.imageUrl} className="w-20 h-14 object-cover rounded-xl border border-white/10 shadow-lg" alt="" /></td>
-                  <td className="p-8">
-                    <p className="font-black text-sm uppercase tracking-tight mb-1">{p.title}</p>
-                    <p className="text-gray-700 font-bold">{p.date} · {p.author}</p>
-                  </td>
-                  <td className="p-8"><span className="px-3 py-1 bg-white/5 rounded-lg font-bold text-[10px] tracking-tighter text-gray-500 uppercase">{p.category}</span></td>
-                  <td className="p-8 text-right"><button onClick={() => confirm('삭제하시겠습니까?') && deletePost(p.id)} className="p-3 text-gray-700 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all"><Trash2 size={20}/></button></td>
-                </tr>
-              ))}
+              {state.posts.map(p => <PostRow key={p.id} post={p} />)}
             </tbody>
           </table>
         </div>
@@ -677,50 +710,48 @@ const AdminPosts: React.FC = () => {
 const AdminSettings: React.FC = () => {
   const { state, updateConfig } = useApp();
   const [tmp, setTmp] = useState(state.config);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    updateConfig(tmp);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
   
   return (
     <AdminLayout>
       <header className="mb-16">
         <h1 className="text-4xl font-black italic uppercase tracking-tighter">Site Engine</h1>
-        <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">Appearance & Identity</p>
+        <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-2">글로벌 테마와 비즈니스 정보를 관리합니다.</p>
       </header>
 
-      <div className="space-y-12 pb-24">
-        <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8">
-          <h2 className="text-xl font-black italic uppercase tracking-tight flex items-center gap-3"><Settings size={22} className="text-primary"/> Global Config</h2>
+      <div className="space-y-10 pb-24">
+        <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 space-y-8 shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 tracking-widest ml-2">Site Name</label><input className="w-full bg-black border border-white/10 rounded-2xl p-5 font-black uppercase outline-none focus:border-primary shadow-inner" value={tmp.siteName} onChange={e => setTmp({...tmp, siteName: e.target.value})} /></div>
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Site Brand Name</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-black uppercase outline-none focus:border-primary transition-all shadow-inner" value={tmp.siteName} onChange={e => setTmp({...tmp, siteName: e.target.value})} /></div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest ml-2">Brand Primary Color</label>
+              <label className="text-[10px] font-black uppercase text-gray-600 ml-2">Primary Color</label>
               <div className="flex gap-4">
-                <input type="color" className="w-16 h-16 bg-black rounded-2xl p-1 cursor-pointer shadow-inner" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} />
-                <input className="flex-1 bg-black border border-white/10 rounded-2xl p-5 font-mono uppercase focus:border-primary outline-none text-lg shadow-inner" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} />
+                <input type="color" className="w-14 h-14 bg-black rounded-xl p-1 cursor-pointer" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} />
+                <input className="flex-1 bg-black border border-white/10 rounded-2xl p-4 font-mono uppercase focus:border-primary outline-none transition-all shadow-inner" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} />
               </div>
             </div>
           </div>
+          <ImageUpload label="메인 히어로 배경" currentImage={tmp.heroImageUrl} onImageChange={b => setTmp({...tmp, heroImageUrl: b})} />
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Main Headline</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-black italic uppercase outline-none focus:border-primary shadow-inner" value={tmp.heroTitle} onChange={e => setTmp({...tmp, heroTitle: e.target.value})} /></div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Sub-headline Description</label><textarea className="w-full h-32 bg-black border border-white/10 rounded-2xl p-4 keep-breaks outline-none focus:border-primary shadow-inner" value={tmp.heroSubtitle} onChange={e => setTmp({...tmp, heroSubtitle: e.target.value})} /></div>
         </section>
 
-        <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-10">
-          <h2 className="text-xl font-black italic uppercase tracking-tight flex items-center gap-3"><HomeIcon size={22} className="text-primary"/> Hero Identity</h2>
-          <ImageUpload label="메인 히어로 배경 이미지" currentImage={tmp.heroImageUrl} onImageChange={b => setTmp({...tmp, heroImageUrl: b})} />
-          <div className="space-y-8">
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 tracking-widest ml-2">Hero Main Slogan</label><input className="w-full bg-black border border-white/10 rounded-2xl p-5 text-2xl font-black italic uppercase tracking-tight outline-none focus:border-primary shadow-inner" value={tmp.heroTitle} onChange={e => setTmp({...tmp, heroTitle: e.target.value})} /></div>
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 tracking-widest ml-2">Hero Description (Subtext)</label><textarea className="w-full h-36 bg-black border border-white/10 rounded-2xl p-6 outline-none focus:border-primary keep-breaks shadow-inner" value={tmp.heroSubtitle} onChange={e => setTmp({...tmp, heroSubtitle: e.target.value})} /></div>
-          </div>
+        <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-2xl">
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Contact Number</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.contactNumber} onChange={e => setTmp({...tmp, contactNumber: e.target.value})} /></div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Location Address</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.address} onChange={e => setTmp({...tmp, address: e.target.value})} /></div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">KakaoTalk Consult URL</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.kakao} onChange={e => setTmp({...tmp, kakao: e.target.value})} /></div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Instagram Profile URL</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.instagram} onChange={e => setTmp({...tmp, instagram: e.target.value})} /></div>
         </section>
 
-        <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8">
-          <h2 className="text-xl font-black italic uppercase tracking-tight flex items-center gap-3"><MessageCircle size={22} className="text-primary"/> Contact & Location</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2"><label className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-600 ml-2 tracking-widest"><ChevronRight size={14}/> Phone Number</label><input className="w-full bg-black border border-white/10 rounded-2xl p-5 font-bold outline-none focus:border-primary shadow-inner" value={tmp.contactNumber} onChange={e => setTmp({...tmp, contactNumber: e.target.value})} /></div>
-            <div className="space-y-2"><label className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-600 ml-2 tracking-widest"><MapPin size={14}/> Center Location Address</label><input className="w-full bg-black border border-white/10 rounded-2xl p-5 font-bold outline-none focus:border-primary shadow-inner" value={tmp.address} onChange={e => setTmp({...tmp, address: e.target.value})} /></div>
-            {[{l: 'Instagram URL', k:'instagram'}, {l: 'Youtube URL', k:'youtube'}, {l: 'Kakao Consult URL (Default)', k:'kakao'}].map(s => (
-              <div key={s.k} className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2 tracking-widest">{s.l}</label><input className="w-full bg-black border border-white/10 rounded-2xl p-5 font-bold outline-none focus:border-primary shadow-inner" value={(tmp as any)[s.k]} onChange={e => setTmp({...tmp, [s.k]: e.target.value})} /></div>
-            ))}
-          </div>
-        </section>
-
-        <button onClick={() => { updateConfig(tmp); alert('저장되었습니다!'); }} className="w-full bg-primary hover:scale-[1.01] active:scale-[0.98] py-8 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 transition-all uppercase tracking-widest"><Save size={28}/> Deploy Configuration</button>
+        <button onClick={handleSave} className={`w-full py-6 rounded-2xl font-black text-xl transition-all shadow-xl flex items-center justify-center gap-4 uppercase tracking-widest ${saved ? 'bg-green-600 text-white' : 'bg-primary text-white shadow-primary/30 active:scale-[0.98]'}`}>
+          {saved ? <><CheckCircle size={28}/> Configuration Deployed</> : <><Save size={28}/> Save Site Settings</>}
+        </button>
       </div>
     </AdminLayout>
   );
