@@ -1,4 +1,11 @@
 
+export interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  date: string;
+}
+
 export interface Post {
   id: string;
   title: string;
@@ -7,6 +14,7 @@ export interface Post {
   date: string;
   author: string;
   imageUrl?: string;
+  comments?: Comment[];
 }
 
 export interface Program {
