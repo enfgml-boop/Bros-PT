@@ -69,7 +69,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return sessionStorage.getItem('admin_auth') === 'true';
   });
 
-  // 전역 상태가 변경될 때마다 확실하게 로컬스토리지에 저장
+  // 전역 상태 변경 시 로컬스토리지 즉시 동기화
   useEffect(() => {
     localStorage.setItem('bros_pt_state', JSON.stringify(state));
     document.documentElement.style.setProperty('--primary-color', state.config.primaryColor);
@@ -180,7 +180,7 @@ const Navbar: React.FC = () => {
     { name: '홈', path: '/' },
     { name: '프로그램', path: '/programs' },
     { name: '트레이너', path: '/trainers' },
-    { name: '블로그', path: '/blog' }
+    { name: '게시판', path: '/blog' } // 명칭 변경
   ];
 
   return (
@@ -295,27 +295,6 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-
-      <section className="py-24 bg-black">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex justify-between items-end mb-16">
-            <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter">Featured<br /><span className="text-primary">Programs</span></h2>
-            <Link to="/programs" className="text-gray-500 hover:text-white font-bold text-xs uppercase flex items-center gap-1">View All <ChevronRight size={14} /></Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {state.programs.slice(0, 3).map(p => (
-              <div key={p.id} className="group relative aspect-[3/4] rounded-3xl overflow-hidden bg-surface border border-white/5 transition-transform hover:-translate-y-2 shadow-2xl">
-                <img src={p.imageUrl} className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-700" alt="" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent p-8 flex flex-col justify-end">
-                  <h3 className="text-2xl font-black italic uppercase mb-3">{p.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-6 keep-breaks font-medium">{p.description}</p>
-                  <Link to="/programs" className="w-fit text-primary font-black uppercase text-[10px] tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">Details <ChevronRight size={14}/></Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
@@ -326,25 +305,17 @@ const ProgramsPage: React.FC = () => {
     <div className="pt-40 pb-24 max-w-7xl mx-auto px-6 animate-fade-in">
       <div className="mb-20 text-center md:text-left">
         <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-4">Programs</h1>
-        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">Precision & Performance</p>
       </div>
       <div className="space-y-32">
         {state.programs.map((p, i) => (
           <div key={p.id} className={`flex flex-col md:flex-row gap-16 items-center ${i % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
-            <div className="flex-1 w-full rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 border border-white/5">
+            <div className="flex-1 w-full rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5">
               <img src={p.imageUrl} className="w-full aspect-[4/3] object-cover" alt={p.title} />
             </div>
             <div className="flex-1 space-y-8">
-              <span className="text-primary font-black uppercase text-[10px] tracking-[0.3em]">Master Class 0{i+1}</span>
               <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tight">{p.title}</h2>
               <p className="text-gray-400 text-lg md:text-xl leading-relaxed keep-breaks font-medium opacity-80">{p.description}</p>
-              <a 
-                href={p.consultUrl || state.config.kakao} 
-                target="_blank" 
-                className="inline-block bg-white text-black font-black py-5 px-14 rounded-2xl hover:bg-primary hover:text-white hover:scale-105 active:scale-95 transition-all shadow-xl"
-              >
-                Inquiry Now
-              </a>
+              <a href={p.consultUrl || state.config.kakao} target="_blank" className="inline-block bg-white text-black font-black py-5 px-14 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-xl uppercase text-sm tracking-widest">Inquiry Now</a>
             </div>
           </div>
         ))}
@@ -357,13 +328,10 @@ const TrainersPage: React.FC = () => {
   const { state } = useApp();
   return (
     <div className="pt-40 pb-24 max-w-7xl mx-auto px-6 animate-fade-in">
-      <div className="mb-20 text-center">
-        <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-4">Elite Crew</h1>
-        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em]">The Best For You</p>
-      </div>
+      <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-20 text-center">Elite Crew</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {state.trainers.map(t => (
-          <div key={t.id} className="bg-surface rounded-[2.5rem] overflow-hidden border border-white/5 flex flex-col lg:flex-row group transition-all hover:bg-surface-light hover:border-primary/20 shadow-2xl">
+          <div key={t.id} className="bg-surface rounded-[2.5rem] overflow-hidden border border-white/5 flex flex-col lg:flex-row group transition-all hover:bg-surface-light shadow-2xl">
             <div className="lg:w-1/2 aspect-[4/5]"><img src={t.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={t.name} /></div>
             <div className="lg:w-1/2 p-10 flex flex-col justify-between">
               <div>
@@ -374,9 +342,7 @@ const TrainersPage: React.FC = () => {
                   {t.specialties.map(s => <span key={s} className="bg-black/50 border border-white/10 px-3 py-1 rounded-lg text-[10px] font-bold text-gray-300 uppercase tracking-tighter">#{s}</span>)}
                 </div>
               </div>
-              <a href={t.consultUrl || state.config.kakao} target="_blank" className="mt-10 group/btn inline-flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform">
-                Consult Coach <ChevronRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-              </a>
+              <a href={t.consultUrl || state.config.kakao} target="_blank" className="mt-10 group/btn inline-flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform">Consult Coach <ChevronRight size={18} /></a>
             </div>
           </div>
         ))}
@@ -389,16 +355,16 @@ const BlogPage: React.FC = () => {
   const { state } = useApp();
   return (
     <div className="pt-40 pb-24 max-w-7xl mx-auto px-6 animate-fade-in">
-      <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-20 text-center md:text-left">Insight</h1>
+      <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-20 text-center md:text-left">Board</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {state.posts.map(post => (
           <article key={post.id} className="bg-surface rounded-3xl overflow-hidden border border-white/5 group flex flex-col h-full hover:border-primary/30 transition-all shadow-xl">
             {post.imageUrl && <div className="aspect-video overflow-hidden"><img src={post.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-60" alt="" /></div>}
             <div className="p-8 flex flex-col flex-1">
-              <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-4">{post.category}</span>
+              <span className="text-primary text-[10px] font-black uppercase mb-4">{post.category}</span>
               <h2 className="text-xl font-bold mb-6 leading-tight group-hover:text-primary transition-colors">{post.title}</h2>
               <div className="text-gray-500 text-sm mb-8 keep-breaks line-clamp-4 flex-1 font-medium">{post.content}</div>
-              <div className="text-[10px] text-gray-700 font-black border-t border-white/5 pt-6 flex justify-between uppercase tracking-widest">
+              <div className="text-[10px] text-gray-700 font-black border-t border-white/5 pt-6 flex justify-between uppercase">
                 <span>{post.author}</span>
                 <span>{post.date}</span>
               </div>
@@ -410,7 +376,7 @@ const BlogPage: React.FC = () => {
   );
 };
 
-// --- Admin Section Components ---
+// --- Admin Components ---
 
 const ProgramEditor: React.FC<{ program: Program }> = ({ program }) => {
   const { updateProgram, deleteProgram } = useApp();
@@ -426,16 +392,13 @@ const ProgramEditor: React.FC<{ program: Program }> = ({ program }) => {
   return (
     <div className="bg-surface p-6 md:p-8 rounded-[2rem] border border-white/5 space-y-6 relative shadow-2xl">
       <button onClick={() => confirm('삭제하시겠습니까?') && deleteProgram(program.id)} className="absolute top-6 right-6 p-2 text-gray-700 hover:text-red-500 transition-all"><Trash2 size={18}/></button>
-      <ImageUpload label="프로그램 썸네일" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
+      <ImageUpload label="프로그램 이미지" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
       <div className="space-y-4">
         <input className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary" value={local.title} onChange={e => setLocal({...local, title: e.target.value})} placeholder="제목" />
-        <div className="relative">
-          <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/>
-          <input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary" value={local.consultUrl || ''} onChange={e => setLocal({...local, consultUrl: e.target.value})} placeholder="개별 상담 URL" />
-        </div>
-        <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-32 resize-none keep-breaks outline-none focus:border-primary" value={local.description} onChange={e => setLocal({...local, description: e.target.value})} placeholder="상세 설명 (엔터 줄바꿈 가능)" />
+        <div className="relative"><LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/><input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary" value={local.consultUrl || ''} onChange={e => setLocal({...local, consultUrl: e.target.value})} placeholder="상담 링크" /></div>
+        <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-32 resize-none keep-breaks outline-none focus:border-primary" value={local.description} onChange={e => setLocal({...local, description: e.target.value})} placeholder="설명" />
       </div>
-      <button onClick={handleSave} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${saved ? 'bg-green-600 text-white shadow-lg' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}>
+      <button onClick={handleSave} className={`w-full py-4 rounded-xl font-black text-xs uppercase transition-all flex items-center justify-center gap-2 ${saved ? 'bg-green-600' : 'bg-primary shadow-lg shadow-primary/20'}`}>
         {saved ? <><CheckCircle size={16}/> 저장완료</> : <><Save size={16}/> 이 프로그램 저장</>}
       </button>
     </div>
@@ -456,19 +419,13 @@ const TrainerEditor: React.FC<{ trainer: Trainer }> = ({ trainer }) => {
   return (
     <div className="bg-surface p-6 md:p-8 rounded-[2rem] border border-white/5 space-y-6 relative shadow-2xl">
       <button onClick={() => confirm('삭제하시겠습니까?') && deleteTrainer(trainer.id)} className="absolute top-6 right-6 p-2 text-gray-700 hover:text-red-500 transition-all"><Trash2 size={18}/></button>
-      <ImageUpload label="코치 프로필" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
+      <ImageUpload label="코치 사진" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary" value={local.name} onChange={e => setLocal({...local, name: e.target.value})} placeholder="이름" />
-          <input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-primary" value={local.role} onChange={e => setLocal({...local, role: e.target.value})} placeholder="직책" />
-        </div>
-        <div className="relative">
-          <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/>
-          <input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary" value={local.consultUrl || ''} onChange={e => setLocal({...local, consultUrl: e.target.value})} placeholder="개별 상담 링크 (오픈프로필 등)" />
-        </div>
-        <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-40 resize-none keep-breaks outline-none focus:border-primary" value={local.bio} onChange={e => setLocal({...local, bio: e.target.value})} placeholder="소개글 (엔터 줄바꿈 가능)" />
+        <div className="grid grid-cols-2 gap-4"><input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-black uppercase outline-none focus:border-primary" value={local.name} onChange={e => setLocal({...local, name: e.target.value})} placeholder="이름" /><input className="bg-black border border-white/10 rounded-2xl p-4 text-sm font-bold outline-none focus:border-primary" value={local.role} onChange={e => setLocal({...local, role: e.target.value})} placeholder="직책" /></div>
+        <div className="relative"><LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700"/><input className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-xs font-bold outline-none focus:border-primary" value={local.consultUrl || ''} onChange={e => setLocal({...local, consultUrl: e.target.value})} placeholder="상담 링크" /></div>
+        <textarea className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm h-40 resize-none keep-breaks outline-none focus:border-primary" value={local.bio} onChange={e => setLocal({...local, bio: e.target.value})} placeholder="소개글" />
       </div>
-      <button onClick={handleSave} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${saved ? 'bg-green-600 text-white shadow-lg' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}>
+      <button onClick={handleSave} className={`w-full py-4 rounded-xl font-black text-xs uppercase transition-all flex items-center justify-center gap-2 ${saved ? 'bg-green-600' : 'bg-primary shadow-lg shadow-primary/20'}`}>
         {saved ? <><CheckCircle size={16}/> 저장완료</> : <><Save size={16}/> 이 트레이너 저장</>}
       </button>
     </div>
@@ -490,14 +447,14 @@ const PostRow: React.FC<{ post: Post }> = ({ post }) => {
   if (isEditing) {
     return (
       <tr className="bg-white/[0.03]">
-        <td colSpan={5} className="p-6">
+        <td colSpan={4} className="p-6">
           <div className="bg-black p-6 rounded-2xl border border-white/10 space-y-4">
-            <ImageUpload label="게시물 이미지" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
+            <ImageUpload label="이미지" currentImage={local.imageUrl} onImageChange={b => setLocal({...local, imageUrl: b})} />
             <input className="w-full bg-surface border border-white/10 rounded-xl p-3 font-bold" value={local.title} onChange={e => setLocal({...local, title: e.target.value})} placeholder="제목" />
             <textarea className="w-full bg-surface border border-white/10 rounded-xl p-3 h-32 keep-breaks" value={local.content} onChange={e => setLocal({...local, content: e.target.value})} placeholder="내용" />
             <div className="flex gap-4">
-              <button onClick={handleSave} className="flex-1 bg-primary py-3 rounded-xl font-black text-xs uppercase text-white shadow-lg">{saved ? '저장됨' : '변경사항 저장하기'}</button>
-              <button onClick={() => setIsEditing(false)} className="flex-1 bg-white/5 py-3 rounded-xl font-black text-xs uppercase text-gray-400">닫기</button>
+              <button onClick={handleSave} className="flex-1 bg-primary py-3 rounded-xl font-black text-xs uppercase text-white shadow-lg">{saved ? '저장됨' : '변경사항 저장'}</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 bg-white/5 py-3 rounded-xl font-black text-xs uppercase">닫기</button>
             </div>
           </div>
         </td>
@@ -506,21 +463,16 @@ const PostRow: React.FC<{ post: Post }> = ({ post }) => {
   }
 
   return (
-    <tr className="hover:bg-white/[0.02] transition-colors border-b border-white/5">
+    <tr className="hover:bg-white/[0.02] border-b border-white/5">
       <td className="p-6"><img src={post.imageUrl} className="w-16 h-10 object-cover rounded-lg border border-white/10" alt="" /></td>
       <td className="p-6"><p className="font-black text-sm uppercase tracking-tighter">{post.title}</p><p className="text-gray-600 text-[10px] mt-1">{post.date}</p></td>
       <td className="p-6"><span className="px-2 py-1 bg-white/5 rounded text-[10px] text-gray-500 font-bold">{post.category}</span></td>
-      <td className="p-6 text-right">
-        <div className="flex justify-end gap-3">
-          <button onClick={() => setIsEditing(true)} className="p-2 text-gray-600 hover:text-primary transition-colors"><Edit3 size={18}/></button>
-          <button onClick={() => confirm('삭제할까요?') && deletePost(post.id)} className="p-2 text-gray-600 hover:text-red-500 transition-colors"><Trash2 size={18}/></button>
-        </div>
-      </td>
+      <td className="p-6 text-right"><div className="flex justify-end gap-3"><button onClick={() => setIsEditing(true)} className="p-2 text-gray-600 hover:text-primary transition-colors"><Edit3 size={18}/></button><button onClick={() => confirm('삭제할까요?') && deletePost(post.id)} className="p-2 text-gray-600 hover:text-red-500 transition-colors"><Trash2 size={18}/></button></div></td>
     </tr>
   );
 };
 
-// --- Admin Setup ---
+// --- Admin Section ---
 
 const AdminLogin: React.FC = () => {
   const { login } = useApp();
@@ -530,11 +482,11 @@ const AdminLogin: React.FC = () => {
     <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-surface border border-white/10 rounded-[2.5rem] p-12 text-center shadow-2xl animate-fade-in">
         <div className="w-20 h-20 bg-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-primary/20"><Lock className="text-black" size={36} /></div>
-        <h1 className="text-2xl font-black italic uppercase mb-8 tracking-tighter">Admin Access</h1>
+        <h1 className="text-2xl font-black italic uppercase mb-8">Admin Access</h1>
         <form onSubmit={e => { e.preventDefault(); if (!login(pw)) { setError(true); setPw(''); } }} className="space-y-6">
-          <input type="password" placeholder="PASSWORD" className="w-full bg-black border border-white/10 rounded-2xl p-5 text-center text-2xl outline-none focus:border-primary font-black tracking-widest uppercase shadow-inner transition-all" value={pw} onChange={e => { setPw(e.target.value); setError(false); }} autoFocus />
+          <input type="password" placeholder="PASSWORD" className="w-full bg-black border border-white/10 rounded-2xl p-5 text-center text-2xl outline-none focus:border-primary font-black uppercase tracking-widest" value={pw} onChange={e => { setPw(e.target.value); setError(false); }} autoFocus />
           {error && <p className="text-red-500 text-xs font-black uppercase">Denied</p>}
-          <button className="w-full bg-primary py-5 rounded-2xl font-black text-white uppercase tracking-widest text-sm shadow-xl shadow-primary/30 transition-all active:scale-95">Unlock Dashboard</button>
+          <button className="w-full bg-primary py-5 rounded-2xl font-black text-white uppercase tracking-widest text-sm shadow-xl shadow-primary/30">Unlock</button>
         </form>
       </div>
     </div>
@@ -550,7 +502,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const menu = [
     { n: '대시보드', p: '/admin', i: <LayoutDashboard size={20}/> },
-    { n: '게시물 관리', p: '/admin/posts', i: <FileText size={20}/> },
+    { n: '게시판 관리', p: '/admin/posts', i: <FileText size={20}/> },
     { n: '프로그램 & 코치', p: '/admin/cms', i: <Users size={20}/> },
     { n: '사이트 설정', p: '/admin/settings', i: <Settings size={20}/> }
   ];
@@ -562,12 +514,10 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </button>
 
       <aside className={`fixed lg:relative z-[90] w-72 h-screen border-r border-white/10 bg-[#080808] flex flex-col p-8 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="text-xl font-black italic mb-16 flex items-center gap-2">
-          <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center"><span className="text-black text-xs font-black">B</span></div> BROS ADMIN
-        </div>
+        <div className="text-xl font-black italic mb-16 flex items-center gap-2">BROS ADMIN</div>
         <nav className="flex-1 space-y-3">
           {menu.map(m => (
-            <Link key={m.p} to={m.p} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold transition-all text-sm ${loc.pathname === m.p ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
+            <Link key={m.p} to={m.p} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold transition-all text-sm ${loc.pathname === m.p ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
               {m.i} {m.n}
             </Link>
           ))}
@@ -588,30 +538,18 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-// --- Admin Content Pages ---
-
 const AdminDashboard: React.FC = () => {
   const { state } = useApp();
   return (
     <AdminLayout>
-      <header className="mb-12">
-        <h1 className="text-4xl font-black italic uppercase tracking-tighter">Dashboard</h1>
-      </header>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-        {[ { l: '방문자', v: '1,284', i: <BarChart3 /> }, { l: '회원', v: '96', i: <Users /> }, { l: '게시물', v: state.posts.length.toString(), i: <FileText /> } ].map(s => (
-          <div key={s.l} className="bg-surface p-10 rounded-[2rem] border border-white/5 flex justify-between items-center group shadow-2xl">
+      <header className="mb-12"><h1 className="text-4xl font-black italic uppercase tracking-tighter">Dashboard</h1></header>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[ { l: '누적 방문', v: '1,284', i: <BarChart3 /> }, { l: '활성 회원', v: '96', i: <Users /> }, { l: '게시물', v: state.posts.length.toString(), i: <FileText /> } ].map(s => (
+          <div key={s.l} className="bg-surface p-10 rounded-[2rem] border border-white/5 flex justify-between items-center shadow-2xl">
             <div className="space-y-2"><p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{s.l}</p><p className="text-3xl font-black italic tracking-tighter">{s.v}</p></div>
-            <div className="text-primary group-hover:scale-110 transition-transform">{s.i}</div>
+            <div className="text-primary">{s.i}</div>
           </div>
         ))}
-      </div>
-      <div className="bg-surface p-8 rounded-[2rem] border border-white/5 shadow-2xl">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><FileText size={20} className="text-primary"/> 최근 업데이트</h2>
-        <div className="space-y-3">
-          {state.posts.slice(0, 3).map(p => (
-            <div key={p.id} className="p-4 bg-white/5 rounded-2xl flex justify-between items-center"><div className="flex gap-4 items-center"><img src={p.imageUrl} className="w-10 h-10 object-cover rounded-lg border border-white/10" /><p className="font-bold text-sm tracking-tight">{p.title}</p></div><ChevronRight size={16} className="text-gray-700" /></div>
-          ))}
-        </div>
       </div>
     </AdminLayout>
   );
@@ -621,29 +559,20 @@ const AdminCMS: React.FC = () => {
   const { state, addProgram, addTrainer } = useApp();
   return (
     <AdminLayout>
-      <header className="mb-16">
-        <h1 className="text-4xl font-black italic uppercase tracking-tighter">Content CMS</h1>
-        <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-2">수정 후 각 항목의 [저장] 버튼을 누르면 즉시 동기화됩니다.</p>
-      </header>
-      
+      <header className="mb-16"><h1 className="text-4xl font-black italic uppercase tracking-tighter">Content CMS</h1></header>
       <section className="mb-24">
         <div className="flex justify-between items-end mb-10 border-b border-white/5 pb-6">
           <h2 className="text-2xl font-black italic uppercase tracking-tighter">Programs</h2>
-          <button onClick={() => addProgram({ id: `p-${Date.now()}`, title: '새 프로그램', description: '', icon: 'target', imageUrl: 'https://picsum.photos/600/400', consultUrl: '' })} className="bg-primary px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 active:scale-95 transition-all"><Plus size={16} className="inline mr-1" /> New Program</button>
+          <button onClick={() => addProgram({ id: `p-${Date.now()}`, title: '새 프로그램', description: '', icon: 'target', imageUrl: 'https://picsum.photos/600/400', consultUrl: '' })} className="bg-primary px-6 py-2 rounded-xl text-[10px] font-black uppercase text-white shadow-lg active:scale-95 transition-all"><Plus size={16} className="inline mr-1" /> New</button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {state.programs.map(p => <ProgramEditor key={p.id} program={p} />)}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{state.programs.map(p => <ProgramEditor key={p.id} program={p} />)}</div>
       </section>
-
       <section className="mb-24">
         <div className="flex justify-between items-end mb-10 border-b border-white/5 pb-6">
           <h2 className="text-2xl font-black italic uppercase tracking-tighter">Elite Crew</h2>
-          <button onClick={() => addTrainer({ id: `t-${Date.now()}`, name: '새 코치', role: '트레이너', bio: '', imageUrl: 'https://picsum.photos/400/500', specialties: ['복싱'], consultUrl: '' })} className="bg-primary px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 active:scale-95 transition-all"><Plus size={16} className="inline mr-1" /> New Trainer</button>
+          <button onClick={() => addTrainer({ id: `t-${Date.now()}`, name: '새 코치', role: '트레이너', bio: '', imageUrl: 'https://picsum.photos/400/500', specialties: ['복싱'], consultUrl: '' })} className="bg-primary px-6 py-2 rounded-xl text-[10px] font-black uppercase text-white shadow-lg active:scale-95 transition-all"><Plus size={16} className="inline mr-1" /> New</button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {state.trainers.map(t => <TrainerEditor key={t.id} trainer={t} />)}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{state.trainers.map(t => <TrainerEditor key={t.id} trainer={t} />)}</div>
       </section>
     </AdminLayout>
   );
@@ -656,53 +585,23 @@ const AdminPosts: React.FC = () => {
 
   const handleAdd = () => {
     if (!form.title || !form.content) return;
-    addPost({ 
-      id: Date.now().toString(), 
-      title: form.title!, 
-      category: form.category as any, 
-      content: form.content!, 
-      date: new Date().toISOString().split('T')[0], 
-      author: form.author!, 
-      imageUrl: form.imageUrl || 'https://picsum.photos/800/600' 
-    });
-    setIsAdd(false); 
-    setForm({ title: '', category: 'NOTICE', content: '', author: '관리자', imageUrl: '' });
+    addPost({ id: Date.now().toString(), title: form.title!, category: form.category as any, content: form.content!, date: new Date().toISOString().split('T')[0], author: form.author!, imageUrl: form.imageUrl || 'https://picsum.photos/800/600' });
+    setIsAdd(false); setForm({ title: '', category: 'NOTICE', content: '', author: '관리자', imageUrl: '' });
   };
 
   return (
     <AdminLayout>
-      <header className="flex justify-between items-end mb-16">
-        <h1 className="text-4xl font-black italic uppercase tracking-tighter">Insights</h1>
-        <button onClick={() => setIsAdd(true)} className="bg-primary px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] flex gap-2 items-center text-white shadow-lg shadow-primary/20 active:scale-95 transition-all"><Plus size={18}/> Write Post</button>
-      </header>
-
+      <header className="flex justify-between items-end mb-16"><h1 className="text-4xl font-black italic uppercase tracking-tighter">Board Management</h1><button onClick={() => setIsAdd(true)} className="bg-primary px-8 py-3 rounded-2xl font-black uppercase text-[10px] text-white shadow-lg active:scale-95 transition-all"><Plus size={18} className="inline mr-1"/> New Post</button></header>
       {isAdd && (
-        <div className="fixed inset-0 z-[150] bg-black/95 flex items-center justify-center p-6 animate-fade-in">
-          <div className="bg-surface w-full max-w-2xl rounded-[3rem] p-10 border border-white/10 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h2 className="text-xl font-black uppercase italic tracking-tighter">New Insight</h2>
-            <ImageUpload label="게시물 대표 이미지" currentImage={form.imageUrl} onImageChange={b => setForm({...form, imageUrl: b})} />
+        <div className="fixed inset-0 z-[150] bg-black/95 flex items-center justify-center p-6 animate-fade-in"><div className="bg-surface w-full max-w-2xl rounded-[3rem] p-10 border border-white/10 space-y-6 shadow-2xl">
+            <h2 className="text-xl font-black uppercase italic">New Board Post</h2>
+            <ImageUpload label="게시물 이미지" currentImage={form.imageUrl} onImageChange={b => setForm({...form, imageUrl: b})} />
             <input className="w-full bg-black border border-white/10 rounded-xl p-4 font-bold outline-none focus:border-primary transition-all" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="제목" />
             <textarea className="w-full h-40 bg-black border border-white/10 rounded-xl p-4 keep-breaks outline-none focus:border-primary transition-all" value={form.content} onChange={e => setForm({...form, content: e.target.value})} placeholder="내용을 입력하세요..." />
-            <div className="flex gap-4">
-              <button onClick={handleAdd} className="flex-1 bg-primary py-4 rounded-xl font-black text-xs uppercase text-white shadow-lg">Save & Post</button>
-              <button onClick={() => setIsAdd(false)} className="flex-1 bg-white/5 py-4 rounded-xl font-black text-xs uppercase text-gray-400">Cancel</button>
-            </div>
-          </div>
-        </div>
+            <div className="flex gap-4"><button onClick={handleAdd} className="flex-1 bg-primary py-4 rounded-xl font-black text-xs uppercase text-white shadow-lg">Save & Post</button><button onClick={() => setIsAdd(false)} className="flex-1 bg-white/5 py-4 rounded-xl font-black text-xs uppercase text-gray-400">Cancel</button></div>
+          </div></div>
       )}
-
-      <div className="bg-surface rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-white/5 text-gray-600 font-black uppercase tracking-widest">
-              <tr><th className="p-6">Thumbnail</th><th className="p-6">Post Info</th><th className="p-6">Category</th><th className="p-6 text-right">Actions</th></tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {state.posts.map(p => <PostRow key={p.id} post={p} />)}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <div className="bg-surface rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-white/5 text-gray-600 font-black uppercase"><tr><th className="p-6">Thumbnail</th><th className="p-6">Post Title</th><th className="p-6">Category</th><th className="p-6 text-right">Actions</th></tr></thead><tbody className="divide-y divide-white/5">{state.posts.map(p => <PostRow key={p.id} post={p} />)}</tbody></table></div></div>
     </AdminLayout>
   );
 };
@@ -720,38 +619,13 @@ const AdminSettings: React.FC = () => {
   
   return (
     <AdminLayout>
-      <header className="mb-16">
-        <h1 className="text-4xl font-black italic uppercase tracking-tighter">Site Engine</h1>
-        <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-2">글로벌 테마와 비즈니스 정보를 관리합니다.</p>
-      </header>
-
+      <header className="mb-16"><h1 className="text-4xl font-black italic uppercase tracking-tighter">Site Engine</h1></header>
       <div className="space-y-10 pb-24">
         <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 space-y-8 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Site Brand Name</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-black uppercase outline-none focus:border-primary transition-all shadow-inner" value={tmp.siteName} onChange={e => setTmp({...tmp, siteName: e.target.value})} /></div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-600 ml-2">Primary Color</label>
-              <div className="flex gap-4">
-                <input type="color" className="w-14 h-14 bg-black rounded-xl p-1 cursor-pointer" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} />
-                <input className="flex-1 bg-black border border-white/10 rounded-2xl p-4 font-mono uppercase focus:border-primary outline-none transition-all shadow-inner" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} />
-              </div>
-            </div>
-          </div>
-          <ImageUpload label="메인 히어로 배경" currentImage={tmp.heroImageUrl} onImageChange={b => setTmp({...tmp, heroImageUrl: b})} />
-          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Main Headline</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-black italic uppercase outline-none focus:border-primary shadow-inner" value={tmp.heroTitle} onChange={e => setTmp({...tmp, heroTitle: e.target.value})} /></div>
-          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Sub-headline Description</label><textarea className="w-full h-32 bg-black border border-white/10 rounded-2xl p-4 keep-breaks outline-none focus:border-primary shadow-inner" value={tmp.heroSubtitle} onChange={e => setTmp({...tmp, heroSubtitle: e.target.value})} /></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8"><div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600">Site Name</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-black uppercase outline-none focus:border-primary" value={tmp.siteName} onChange={e => setTmp({...tmp, siteName: e.target.value})} /></div><div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600">Theme Color</label><div className="flex gap-4"><input type="color" className="w-14 h-14 bg-black rounded-xl p-1 cursor-pointer" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} /><input className="flex-1 bg-black border border-white/10 rounded-2xl p-4 font-mono uppercase focus:border-primary outline-none" value={tmp.primaryColor} onChange={e => setTmp({...tmp, primaryColor: e.target.value})} /></div></div></div>
+          <ImageUpload label="메인 이미지" currentImage={tmp.heroImageUrl} onImageChange={b => setTmp({...tmp, heroImageUrl: b})} /><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-black italic uppercase" value={tmp.heroTitle} onChange={e => setTmp({...tmp, heroTitle: e.target.value})} /><textarea className="w-full h-32 bg-black border border-white/10 rounded-2xl p-4 keep-breaks" value={tmp.heroSubtitle} onChange={e => setTmp({...tmp, heroSubtitle: e.target.value})} />
         </section>
-
-        <section className="bg-surface p-10 rounded-[2.5rem] border border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-2xl">
-          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Contact Number</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.contactNumber} onChange={e => setTmp({...tmp, contactNumber: e.target.value})} /></div>
-          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Location Address</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.address} onChange={e => setTmp({...tmp, address: e.target.value})} /></div>
-          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">KakaoTalk Consult URL</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.kakao} onChange={e => setTmp({...tmp, kakao: e.target.value})} /></div>
-          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-gray-600 ml-2">Instagram Profile URL</label><input className="w-full bg-black border border-white/10 rounded-2xl p-4 font-bold outline-none focus:border-primary shadow-inner" value={tmp.instagram} onChange={e => setTmp({...tmp, instagram: e.target.value})} /></div>
-        </section>
-
-        <button onClick={handleSave} className={`w-full py-6 rounded-2xl font-black text-xl transition-all shadow-xl flex items-center justify-center gap-4 uppercase tracking-widest ${saved ? 'bg-green-600 text-white' : 'bg-primary text-white shadow-primary/30 active:scale-[0.98]'}`}>
-          {saved ? <><CheckCircle size={28}/> Configuration Deployed</> : <><Save size={28}/> Save Site Settings</>}
-        </button>
+        <button onClick={handleSave} className={`w-full py-6 rounded-2xl font-black text-xl transition-all shadow-xl flex items-center justify-center gap-4 uppercase tracking-widest ${saved ? 'bg-green-600 text-white' : 'bg-primary text-white shadow-primary/30 active:scale-[0.98]'}`}>{saved ? <><CheckCircle size={28}/> Saved Success</> : <><Save size={28}/> Deploy Global Settings</>}</button>
       </div>
     </AdminLayout>
   );
